@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보이스피싱 취약 유형 진단 — 코인원 이용자보호팀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface2: #F2F1ED;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-hint: #A0A0A0;
+  --border: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.18);
+  --accent: #1A1A1A;
+  --blue: #1B5EE8;
+  --blue-light: #EEF3FE;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.1);
+  --font-body: 'Noto Sans KR', sans-serif;
+  --font-display: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  height: 56px;
+  background: rgba(247,246,242,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--text-primary); text-decoration: none;
+}
+.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+.header-tag {
+  font-size: 11px; font-weight: 500; color: var(--text-secondary);
+  background: var(--surface2); border: 0.5px solid var(--border);
+  padding: 4px 10px; border-radius: 20px;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 120px 1.5rem 60px;
+  max-width: 680px; margin: 0 auto; text-align: center;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--blue);
+  background: var(--blue-light); border: 0.5px solid rgba(27,94,232,0.2);
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 1.5rem;
+}
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--blue); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.hero h1 {
+  font-family: var(--font-display); font-size: clamp(28px, 5vw, 42px);
+  font-weight: 700; line-height: 1.2; letter-spacing: -0.02em;
+  color: var(--text-primary); margin-bottom: 1rem;
+}
+.hero h1 em { font-style: normal; color: var(--blue); }
+.hero p {
+  font-size: 16px; color: var(--text-secondary);
+  line-height: 1.7; max-width: 460px; margin: 0 auto 2rem;
+}
+.hero-meta {
+  display: flex; align-items: center; justify-content: center; gap: 1.5rem;
+  font-size: 13px; color: var(--text-hint);
+}
+.hero-meta span { display: flex; align-items: center; gap: 5px; }
+.hero-meta strong { color: var(--text-secondary); font-weight: 500; }
+.hero-scroll {
+  margin-top: 3rem;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.hero-scroll span { font-size: 12px; color: var(--text-hint); }
+.scroll-arrow {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 0.5px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+
+/* ── QUIZ CARD ── */
+.quiz-section {
+  max-width: 640px; margin: 0 auto; padding: 0 1.5rem 6rem;
+}
+.quiz-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.quiz-header {
+  padding: 1.5rem 2rem 0;
+}
+.prog-track {
+  height: 3px; background: var(--surface2);
+  border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden;
+}
+.prog-fill {
+  height: 100%; background: var(--blue);
+  border-radius: 2px; transition: width .4s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+.quiz-step {
+  font-size: 11px; font-weight: 500; color: var(--text-hint);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.quiz-body { padding: 1.25rem 2rem 1.5rem; }
+.quiz-q {
+  font-size: 17px; font-weight: 500; line-height: 1.6;
+  color: var(--text-primary); margin-bottom: 1.5rem;
+}
+.quiz-q .q-prefix {
+  display: inline-block;
+  font-size: 12px; font-weight: 500; color: var(--blue);
+  background: var(--blue-light); padding: 2px 8px;
+  border-radius: 4px; margin-bottom: 8px;
+}
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all .15s;
+  background: var(--surface);
+}
+.opt:hover { border-color: var(--border-strong); background: var(--surface2); }
+.opt.sel {
+  border-color: var(--blue); background: var(--blue-light);
+}
+.opt-radio {
+  width: 20px; height: 20px; min-width: 20px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  position: relative; transition: all .15s;
+}
+.opt.sel .opt-radio {
+  border-color: var(--blue); background: var(--blue);
+}
+.opt.sel .opt-radio::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 7px; height: 7px; border-radius: 50%; background: #fff;
+}
+.opt-label { font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+.opt.sel .opt-label { color: var(--blue); font-weight: 500; }
+.quiz-footer {
+  padding: 1rem 2rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 0.5px solid var(--border);
+}
+.btn-nav {
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-strong);
+  background: transparent; cursor: pointer;
+  font-size: 14px; font-family: var(--font-body);
+  color: var(--text-primary); font-weight: 500;
+  transition: all .15s;
+}
+.btn-nav:hover { background: var(--surface2); }
+.btn-nav:disabled { opacity: .3; cursor: not-allowed; }
+.btn-next {
+  background: var(--text-primary); color: #fff;
+  border-color: var(--text-primary); padding: 10px 24px;
+}
+.btn-next:hover { background: #333; border-color: #333; }
+.btn-next:disabled { opacity: .3; }
+
+/* ── RESULT ── */
+.result-wrap { display: none; }
+.result-hero-card {
+  margin: 2rem 1.5rem;
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.result-label {
+  font-size: 11px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; opacity: .7; margin-bottom: .5rem;
+}
+.result-type {
+  font-family: var(--font-display); font-size: 32px; font-weight: 700;
+  line-height: 1.1; margin-bottom: .75rem; letter-spacing: -.02em;
+}
+.result-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; margin-bottom: 1rem;
+  border: 1px solid currentColor; opacity: .8;
+}
+.result-desc {
+  font-size: 14px; line-height: 1.7; opacity: .8;
+  max-width: 400px; margin: 0 auto;
+}
+.result-body {
+  max-width: 640px; margin: 0 auto; padding: 0 1.5rem 4rem;
+}
+.section-head {
+  font-size: 11px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-hint);
+  margin-bottom: 1rem; margin-top: 2rem;
+}
+.bars-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+.bar-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+.bar-row:last-child { margin-bottom: 0; }
+.bar-name { font-size: 13px; color: var(--text-secondary); width: 80px; min-width: 80px; text-align: right; }
+.bar-track {
+  flex: 1; height: 7px; background: var(--surface2);
+  border-radius: 4px; overflow: hidden;
+}
+.bar-fill { height: 100%; border-radius: 4px; width: 0; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.bar-score { font-size: 12px; color: var(--text-hint); width: 28px; text-align: right; }
+.why-card {
+  border-radius: var(--radius-lg); padding: 1.5rem;
+  border-left: 3px solid; margin-top: 1rem;
+}
+.why-title { font-size: 15px; font-weight: 500; margin-bottom: .5rem; }
+.why-body { font-size: 14px; line-height: 1.7; }
+.tips-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 0;
+}
+@media (max-width: 480px) { .tips-grid { grid-template-columns: 1fr; } }
+.tip-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 1rem 1.1rem;
+  box-shadow: var(--shadow);
+}
+.tip-card.top-card { border-width: 1.5px; }
+.tip-type { font-size: 11px; color: var(--text-hint); margin-bottom: 5px; font-weight: 500; }
+.tip-type.top { font-weight: 700; }
+.tip-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+.share-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-top: 2rem;
+}
+.btn-share {
+  padding: 11px 22px; border-radius: var(--radius-sm);
+  font-size: 14px; font-family: var(--font-body); font-weight: 500;
+  cursor: pointer; border: 0.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text-primary);
+  transition: all .15s; display: flex; align-items: center; gap: 7px;
+}
+.btn-share:hover { background: var(--surface2); }
+.btn-share.primary {
+  background: var(--text-primary); color: #fff; border-color: var(--text-primary);
+}
+.btn-share.primary:hover { background: #333; }
+.share-icon { font-size: 15px; }
+
+/* ── FOOTER ── */
+.site-footer {
+  text-align: center; padding: 2rem 1rem;
+  border-top: 0.5px solid var(--border);
+  font-size: 12px; color: var(--text-hint);
+}
+.site-footer a { color: var(--text-hint); text-decoration: underline; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text-primary); color: #fff;
+  padding: 10px 20px; border-radius: 30px;
+  font-size: 13px; font-weight: 500;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none; white-space: nowrap; z-index: 999;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── MISC ── */
+.divider { border: none; border-top: 0.5px solid var(--border); margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="#">
+    <div class="logo-dot"></div>
+    Coinone Guard
+  </a>
+  <span class="header-tag">이용자보호팀 · 보이스피싱 진단</span>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">무료 성향 진단</div>
+  <h1>나는 어떤 보이스피싱에<br><em>취약</em>할까?</h1>
+  <p>9가지 성향 질문으로 나의 취약 유형을 파악하고,<br>맞춤 예방 수칙을 확인하세요.</p>
+  <div class="hero-meta">
+    <span>⏱ <strong>3분</strong> 소요</span>
+    <span>📋 <strong>9개</strong> 질문</span>
+    <span>🔒 <strong>결과 저장 안 함</strong></span>
+  </div>
+  <div class="hero-scroll">
+    <span>아래로 스크롤하여 시작</span>
+    <div class="scroll-arrow">↓</div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="quiz-section" id="quiz-section">
+  <div class="quiz-card" id="quiz-card">
+    <div class="quiz-header">
+      <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
+      <div class="quiz-step" id="qstep">1 / 9</div>
+    </div>
+    <div class="quiz-body">
+      <div class="quiz-q" id="qq"></div>
+      <div class="opts" id="opts"></div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn-nav" id="bprev" onclick="go(-1)" disabled>← 이전</button>
+      <button class="btn-nav btn-next" id="bnext" onclick="go(1)" disabled>다음 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section class="result-wrap" id="result-wrap">
+  <div class="result-hero-card" id="rhero">
+    <div class="result-label">나의 최우선 주의 유형</div>
+    <div class="result-type" id="rtype"></div>
+    <div class="result-badge" id="rbadge">최우선 주의</div>
+    <div class="result-desc" id="rdesc"></div>
+  </div>
+
+  <div class="result-body">
+    <div class="section-head">전체 유형별 취약도</div>
+    <div class="bars-card" id="bars"></div>
+
+    <div id="why-wrap"></div>
+
+    <div class="divider"></div>
+    <div class="section-head">6대 유형별 예방 핵심 수칙</div>
+    <div class="tips-grid" id="tips-grid"></div>
+
+    <div class="share-row">
+      <button class="btn-share primary" onclick="copyLink()">
+        <span class="share-icon">🔗</span> 링크 복사
+      </button>
+      <button class="btn-share" onclick="resetQuiz()">
+        다시 진단하기
+      </button>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  © 2026 Coinone 이용자보호팀 · 본 진단은 교육 목적이며 실제 범죄 예방을 보장하지 않습니다.
+</footer>
+
+<div class="toast" id="toast">링크가 복사되었습니다!</div>
+
+<script>
+const T = {
+  names: ["기관사칭","대출사기","납치협박","로맨스스캠","투자리딩방","코인원사칭"],
+  colors: ["#E24B4A","#BA7517","#D4537E","#7F77DD","#1D9E75","#1B5EE8"],
+  heroBg: ["#FCEBEB","#FAEEDA","#FBEAF0","#EEEDFE","#EAF3DE","#EEF3FE"],
+  heroText: ["#A32D2D","#854F0B","#993556","#3C3489","#3B6D11","#1B5EE8"],
+  tagBg: ["rgba(226,75,74,.15)","rgba(186,117,23,.15)","rgba(212,83,126,.15)","rgba(127,119,221,.15)","rgba(29,158,117,.15)","rgba(27,94,232,.15)"],
+  desc: [
+    "검찰·경찰·금감원 등 정부기관 사칭으로 '계좌 동결·수사 협조'를 빌미로 송금을 유도하는 수법",
+    "저금리 대환대출을 미끼로 선입금·수수료 명목으로 금전을 편취하는 수법",
+    "가족이 사고·납치됐다고 속여 즉각 송금을 요구하고 연락을 차단하게 하는 수법",
+    "SNS에서 장기간 친분을 쌓은 뒤 투자·선물·긴급 송금을 유도하는 수법",
+    "리딩방·단체채팅에서 고수익을 보장해 주식·가상자산 투자금을 편취하는 수법",
+    "코인원 직원·보안팀을 사칭해 계정 점검 명목으로 자산 이전을 유도하는 수법",
+  ],
+  warn: [
+    { title:"왜 기관사칭에 취약한가요?", body:"'권위 있는 기관의 말은 따라야 한다'는 심리가 강할수록 사칭범이 만들어낸 공포에 쉽게 흔들립니다. 정부기관은 어떠한 경우에도 전화로 송금·계좌이동을 요구하지 않습니다." },
+    { title:"왜 대출사기에 취약한가요?", body:"금융 불안이나 '좋은 조건을 놓치면 안 된다'는 조급함이 판단을 흐립니다. 대출 실행 전 선입금을 요구하는 금융상품은 존재하지 않습니다." },
+    { title:"왜 납치협박에 취약한가요?", body:"가족 걱정이 크고 즉각 행동하는 성향일수록 '3초도 안 되는 시간에 송금'하게 됩니다. 가족 사고 연락 시 반드시 직접 전화로 확인하는 습관이 핵심입니다." },
+    { title:"왜 로맨스스캠에 취약한가요?", body:"온라인 관계를 오프라인만큼 신뢰하거나 관계가 끊길까 봐 거절을 못하는 성향이 표적이 됩니다. 온라인에서 만난 상대의 금전 요청은 이유 불문 거절하세요." },
+    { title:"왜 투자리딩방에 취약한가요?", body:"수익 기회를 놓칠까 봐 불안하거나 투자 정보에 민감한 성향이 '무료 정보' 미끼에 끌립니다. 원금 보장·고수익 약속은 금융법상 불법입니다." },
+    { title:"왜 코인원사칭에 취약한가요?", body:"디지털 금융 서비스가 낯설거나 '전문가가 안내해준다'는 상황을 신뢰하는 성향이 노출됩니다. 코인원은 전화·문자로 자산 이전이나 OTP를 요청하지 않습니다." },
+  ],
+  tips: [
+    "전화로 송금을 요청하는 기관은 없습니다. 즉시 끊고 1332로 재확인하세요.",
+    "선입금 요구는 100% 사기입니다. 어떤 이유도 먼저 송금하지 마세요.",
+    "가족 사고 연락 시 자녀에게 직접 전화하세요. 3초만 멈추면 됩니다.",
+    "온라인 지인의 송금 요청은 이유 불문 거절하세요.",
+    "리딩방 추천 종목·원금보장 상품에는 절대 투자하지 마세요.",
+    "코인원은 자산이전·OTP를 전화로 요청하지 않습니다. 의심 시 고객센터로.",
+  ]
+};
+
+const QS = [
+  { q:"나는 공공기관이나 전문가(의사·변호사·금융전문가)의 말이라면 일단 믿고 따르는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[4,0,0,0,0,1],[2,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 좋은 기회를 놓칠까 봐 빠르게 결정하는 편이고, 나중에 후회한 경험이 있다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[1,3,0,0,3,0],[0,2,0,0,2,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 온라인에서 만든 인연도 충분히 신뢰할 수 있다고 생각하고, 그런 관계를 소중히 여긴다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[0,0,0,4,0,0],[0,0,0,2,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 가족이나 가까운 사람에게 문제가 생겼다는 연락을 받으면 일단 행동부터 하는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[0,0,4,0,0,0],[0,0,2,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 투자·재테크 정보에 관심이 많고, 수익 기회가 생기면 적극적으로 알아보는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[0,1,0,0,4,0],[0,0,0,0,2,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 금융 앱·디지털 기기 사용이 낯설거나 복잡하게 느껴져 다른 사람의 도움을 받는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[0,0,0,0,0,4],[0,0,0,0,0,2],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 관계가 끊어질까 봐, 또는 상대방이 실망할까 봐 거절하기가 어려운 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[0,0,1,3,1,0],[0,0,0,2,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 '설마 나한테 그런 일이 생기겠어' 하고 보이스피싱 피해를 남의 일로 여기는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[2,1,1,2,2,2],[1,0,0,1,1,1],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+  { q:"나는 긴급 상황에서 '일단 요청대로 하고 나중에 따져야지'라고 생각하는 편이다.", opts:["매우 그렇다","그런 편이다","잘 모르겠다","그렇지 않은 편이다"], s:[[3,2,2,2,1,2],[2,1,1,1,0,1],[0,0,0,0,0,0],[0,0,0,0,0,0]] },
+];
+
+let cur = 0, ans = new Array(QS.length).fill(-1);
+
+function render() {
+  const q = QS[cur];
+  document.getElementById('qstep').textContent = `${cur + 1} / ${QS.length}`;
+  document.getElementById('pf').style.width = (cur / QS.length * 100) + '%';
+
+  const qq = document.getElementById('qq');
+  qq.innerHTML = `<div class="q-prefix">나는 평소에</div>${q.q}`;
+
+  const op = document.getElementById('opts');
+  op.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'opt' + (ans[cur] === i ? ' sel' : '');
+    d.onclick = () => select(i);
+    d.innerHTML = `<div class="opt-radio"></div><div class="opt-label">${o}</div>`;
+    op.appendChild(d);
+  });
+
+  document.getElementById('bprev').disabled = cur === 0;
+  document.getElementById('bnext').disabled = ans[cur] === -1;
+  document.getElementById('bnext').textContent = cur === QS.length - 1 ? '결과 보기 →' : '다음 →';
+}
+
+function select(i) {
+  ans[cur] = i;
+  document.querySelectorAll('.opt').forEach((e, j) => e.className = 'opt' + (j === i ? ' sel' : ''));
+  document.getElementById('bnext').disabled = false;
+}
+
+function go(d) {
+  if (d === 1 && cur < QS.length - 1) { cur++; render(); scrollToQuiz(); }
+  else if (d === 1) showResult();
+  else if (d === -1 && cur > 0) { cur--; render(); }
+}
+
+function scrollToQuiz() {
+  document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showResult() {
+  const sc = [0, 0, 0, 0, 0, 0];
+  ans.forEach((a, qi) => { if (a >= 0) QS[qi].s[a].forEach((v, ti) => sc[ti] += v); });
+  const mx = Math.max(...sc);
+  const top = sc.indexOf(mx);
+
+  document.getElementById('quiz-section').style.display = 'none';
+  const rw = document.getElementById('result-wrap');
+  rw.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const hero = document.getElementById('rhero');
+  hero.style.background = T.heroBg[top];
+  document.getElementById('rtype').textContent = T.names[top] + '형';
+  document.getElementById('rtype').style.color = T.heroText[top];
+  const badge = document.getElementById('rbadge');
+  badge.style.color = T.heroText[top];
+  badge.style.borderColor = T.heroText[top];
+  document.getElementById('rdesc').textContent = T.desc[top];
+
+  const maxS = Math.max(...sc, 1);
+  const barsEl = document.getElementById('bars');
+  barsEl.innerHTML = '';
+  T.names.forEach((n, i) => {
+    const pct = Math.round(sc[i] / maxS * 100);
+    const isTop = i === top;
+    barsEl.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-name" style="${isTop ? 'font-weight:500;color:var(--text-primary)' : ''}">${n}${isTop ? ' ★' : ''}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="background:${T.colors[i]};opacity:${isTop ? 1 : 0.45}" data-w="${pct}"></div>
+        </div>
+        <div class="bar-score">${sc[i]}점</div>
+      </div>`;
+  });
+  setTimeout(() => document.querySelectorAll('.bar-fill').forEach(e => e.style.width = e.dataset.w + '%'), 80);
+
+  const ww = document.getElementById('why-wrap');
+  ww.innerHTML = `
+    <div class="why-card" style="background:${T.heroBg[top]};border-left-color:${T.colors[top]}">
+      <div class="why-title" style="color:${T.heroText[top]}">${T.warn[top].title}</div>
+      <div class="why-body" style="color:${T.heroText[top]};opacity:.85">${T.warn[top].body}</div>
+    </div>`;
+
+  const cg = document.getElementById('tips-grid');
+  cg.innerHTML = '';
+  T.names.forEach((n, i) => {
+    const isTop = i === top;
+    cg.innerHTML += `
+      <div class="tip-card ${isTop ? 'top-card' : ''}" style="${isTop ? `border-color:${T.colors[top]}` : ''}">
+        <div class="tip-type ${isTop ? 'top' : ''}" style="${isTop ? `color:${T.heroText[top]}` : ''}">${isTop ? '★ 최우선 주의 — ' : ''}${n}형</div>
+        <div class="tip-text">${T.tips[i]}</div>
+      </div>`;
+  });
+
+  document.getElementById('pf').style.width = '100%';
+}
+
+function resetQuiz() {
+  cur = 0; ans = new Array(QS.length).fill(-1);
+  document.getElementById('result-wrap').style.display = 'none';
+  document.getElementById('quiz-section').style.display = 'block';
+  render();
+  scrollToQuiz();
+}
+
+function copyLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }).catch(() => {
+    prompt('아래 링크를 복사하세요:', url);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
